@@ -49,7 +49,7 @@ public class RiotMatchServiceImpl implements RiotMatchService {
     }
 
     @Override
-    @Cacheable(cacheNames = "match")
+    @Cacheable(cacheNames = "match", key = "#matchId")
     public MatchDto crawlMatchById(String matchId) {
         HttpEntity<Object> request = new HttpEntity<>(httpService.prepareHeaders(new HashMap<>()));
         String url = httpService.prepareUrl("/lol/match/v5/matches/" + matchId);

@@ -32,7 +32,7 @@ public class RiotAccountServiceImpl implements RiotAccountService {
     }
 
     @Override
-    @Cacheable(cacheNames = "account")
+    @Cacheable(cacheNames = "account", key = "#puuid")
     public Account findAccount(String puuid) {
         HttpHeaders httpHeaders = httpService.prepareHeaders(new HashMap<>());
         HttpEntity<Object> httpEntity = new HttpEntity<>(httpHeaders);
