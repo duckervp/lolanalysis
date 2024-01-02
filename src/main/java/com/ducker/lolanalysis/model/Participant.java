@@ -1,10 +1,10 @@
 package com.ducker.lolanalysis.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,18 +12,19 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table
 public class Participant {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String matchId; // Match id PK
-    private String puuid; // Account id PK
-    private Long perkId; // Perk id PK
+    private String id;
+    private String matchId; // Reference to Match id field
+    private String puuid; // Reference to Account id field
     private int assists;
     private int baronKills;
     private int bountyLevel;
+    // challenges - not use yet
     private int champExperience;
     private int champLevel;
     private int championId; // Consider championName for matches prior to patch 11.4
@@ -68,6 +69,7 @@ public class Participant {
     private int magicDamageDealt;
     private int magicDamageDealtToChampions;
     private int magicDamageTaken;
+    // missions - not use yet
     private int neutralMinionsKilled;
     private int nexusKills;
     private int nexusTakedowns;

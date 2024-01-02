@@ -9,13 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @RequiredArgsConstructor
 @Slf4j
-public enum ObjectiveType {
-    BARON("baron"),
-    CHAMPION("champion"),
-    DRAGON("dragon"),
-    INHIBITOR("inhibitor"),
-    RIFT_HERALD("riftHerald"),
-    TOWER("tower");
+public enum PerkType {
+    PRIMARY_TYPE("primaryType"),
+    SUB_TYPE("subType");
 
     private final String value;
 
@@ -25,13 +21,13 @@ public enum ObjectiveType {
     }
 
     @JsonCreator // convert value to enum on request class
-    public static ObjectiveType fromValue(String value) {
-        for (ObjectiveType name : ObjectiveType.values()) {
+    public static PerkType fromValue(String value) {
+        for (PerkType name : PerkType.values()) {
             if (name.value.equalsIgnoreCase(value)) {
                 return name;
             }
         }
-        log.error("Invalid ObjectiveType value: {}", value);
+        log.error("Invalid PerkType value: {}", value);
         return null;
     }
 }
