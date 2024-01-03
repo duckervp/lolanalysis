@@ -1,7 +1,5 @@
 package com.ducker.lolanalysis.model;
 
-import com.ducker.lolanalysis.dto.ParticipantDto;
-import com.ducker.lolanalysis.dto.TeamDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -11,13 +9,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
-@Table
+@Table(name = "`match`")
 @AllArgsConstructor
 @Builder
 public class Match {

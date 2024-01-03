@@ -2,4 +2,15 @@ server:
   port: 8080
 
 riotGames:
-  apiKey: ${RIOT_API_KEY:RGAPI-c762cf1d-4b01-4a9c-95ec-ee343b064366}
+  apiKey: ${RIOT_API_KEY:RGAPI-af5f5c78-56ab-41d1-a7b3-b731ffc20359}
+
+spring:
+  jpa:
+    openInView: false
+    hibernate:
+      ddlAuto: update
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_URL:localhost:3333}/lolanalysis?autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:123456}

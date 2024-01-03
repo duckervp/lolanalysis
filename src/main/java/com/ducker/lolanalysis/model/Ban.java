@@ -22,7 +22,6 @@ public class Ban {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String matchId;
     private Long teamId;
     private int championId;
     private int pickTurn;
