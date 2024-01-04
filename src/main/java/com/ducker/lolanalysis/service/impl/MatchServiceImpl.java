@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -114,6 +115,7 @@ public class MatchServiceImpl implements MatchService {
                 .tournamentCode(matchInfo.getTournamentCode())
                 .build();
         matchRepository.save(match);
+        matchLookupRepository.save(new MatchLookup(match.getMatchId()));
 
         List<Team> teams = new ArrayList<>();
         Map<Integer, TeamDto> teamDtoMap = new HashMap<>();
@@ -189,10 +191,48 @@ public class MatchServiceImpl implements MatchService {
 
     @SneakyThrows
     @Override
+    @Cacheable(cacheNames = "match", key = "#matchId")
     public MatchDto findByMatchId(String matchId) {
-        Match match = matchRepository.findByMatchId(matchId).orElseThrow(
-                () -> new NotFoundException("Not found match with id: " + matchId)
-        );
+        MatchDto matchDto = findByMatchId1(matchId);
+        if (Objects.isNull(matchDto)) {
+            throw new NotFoundException("Not found match with id: " + matchId);
+        }
+        return matchDto;
+    }
+
+    @Override
+    @Cacheable(cacheNames = "matches")
+    public List<MatchDto> findByMatchIds(List<String> matchIds) {
+        return findByMatchIds1(matchIds);
+    }
+
+    @Override
+    @Cacheable(cacheNames = "matches")
+    public List<MatchDto> findMatches(Integer pageNo, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
+        List<String> matchIds = matchLookupRepository.findMatchLookup(pageable)
+                .stream().map(MatchLookup::getMatchId).toList();
+        return findByMatchIds1(matchIds);
+    }
+
+    private List<MatchDto> findByMatchIds1(List<String> matchIds) {
+        List<MatchDto> matchDtoList = new ArrayList<>();
+        for (String matchId : matchIds) {
+            MatchDto matchDto = findByMatchId1(matchId);
+            if (Objects.isNull(matchDto)) {
+                matchDto = riotMatchService.crawlMatchById(matchId);
+                save1(matchDto);
+            }
+            matchDtoList.add(matchDto);
+        }
+        return matchDtoList;
+    }
+
+    public MatchDto findByMatchId1(String matchId) {
+        Match match = matchRepository.findByMatchId(matchId).orElse(null);
+        if (Objects.isNull(match)) {
+            return null;
+        }
 
         MatchDto matchDto = new MatchDto();
         MetadataDto metadataDto = MetadataDto.builder()
@@ -258,28 +298,6 @@ public class MatchServiceImpl implements MatchService {
         matchDto.setInfo(infoDto);
 
         return matchDto;
-    }
-
-    @Override
-    public List<MatchDto> findByMatchIds(List<String> matchIds) {
-        List<MatchDto> matchDtoList = new ArrayList<>();
-        for (String matchId : matchIds) {
-            MatchDto matchDto = findByMatchId(matchId);
-            if (Objects.isNull(matchDto)) {
-                matchDto = riotMatchService.crawlMatchById(matchId);
-                save1(matchDto);
-            }
-            matchDtoList.add(matchDto);
-        }
-        return matchDtoList;
-    }
-
-    @Override
-    public List<MatchDto> findMatches(Integer pageNo, Integer pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
-        List<String> matchIds = matchLookupRepository.findMatchLookup(pageable)
-                .stream().map(MatchLookup::getMatchId).toList();
-        return findByMatchIds(matchIds);
     }
 
     private String genKey(List<Integer> params) {

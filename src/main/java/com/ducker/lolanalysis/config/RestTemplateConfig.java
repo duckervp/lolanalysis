@@ -1,6 +1,7 @@
 package com.ducker.lolanalysis.config;
 
 import com.ducker.lolanalysis.exception.NotFoundException;
+import com.ducker.lolanalysis.exception.RiotTokenException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
@@ -28,7 +29,7 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        RestTemplate restTemplate =  new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
         restTemplate.setErrorHandler(restTemplateResponseErrorHandler());
         return restTemplate;
     }
@@ -43,23 +44,25 @@ public class RestTemplateConfig {
 
             @Override
             public void handleError(@NonNull ClientHttpResponse response) throws IOException {
+                String result = new BufferedReader(new InputStreamReader(response.getBody()))
+                        .lines().collect(Collectors.joining("\n"));
+                TypeReference<Map<String, Map<String, Object>>> typeReference = new TypeReference<>() {
+
+                };
+
+                Map<String, Map<String, Object>> resultMap = objectMapper.readValue(result, typeReference);
+                log.info("Rest Error: {}", resultMap);
+
+                Map<String, Object> status = resultMap.get("status");
+                String message = response.getStatusText();
+                if (Objects.nonNull(status)) {
+                    message = (String) status.get("message");
+                }
+
                 if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-                    String result = new BufferedReader(new InputStreamReader(response.getBody()))
-                            .lines().collect(Collectors.joining("\n"));
-                    TypeReference<Map<String, Map<String, Object>>> typeReference = new TypeReference<>() {
-
-                    };
-
-                    Map<String, Map<String, Object>> resultMap = objectMapper.readValue(result, typeReference);
-                    log.info("Rest Error: {}", resultMap);
-
-                    Map<String, Object> status = resultMap.get("status");
-                    String message = response.getStatusText();
-                    if (Objects.nonNull(status)) {
-                        message = (String) status.get("message");
-                    }
-
                     throw new NotFoundException(message);
+                } else if (response.getStatusCode() == HttpStatus.FORBIDDEN) {
+                    throw new RiotTokenException(message);
                 }
             }
         };

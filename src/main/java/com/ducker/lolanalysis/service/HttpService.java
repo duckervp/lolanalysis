@@ -11,7 +11,7 @@ import java.util.Map;
 @Slf4j
 public class HttpService {
     @Value("${riotGames.apiKey}")
-    private String riotGamesApiKey = "RGAPI-7a5d2166-6b6d-49a3-a21f-e9da43735c7c";
+    private String riotGamesApiKey;
 
     public String prepareUrl(String apiPath) {
         log.info("Prepare Url for {}", apiPath);
@@ -33,7 +33,8 @@ public class HttpService {
 
     public HttpHeaders prepareHeaders(Map<String, String> headerMap) {
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("X-Riot-Token", riotGamesApiKey);
+        String riotTokenHeader = "X-Riot-Token";
+        httpHeaders.add(riotTokenHeader, riotGamesApiKey);
         headerMap.forEach(httpHeaders::add);
         return httpHeaders;
     }

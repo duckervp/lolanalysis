@@ -2,7 +2,7 @@ server:
   port: 8080
 
 riotGames:
-  apiKey: ${RIOT_API_KEY:RGAPI-af5f5c78-56ab-41d1-a7b3-b731ffc20359}
+  apiKey: ${RIOT_API_KEY}
 
 spring:
   jpa:
