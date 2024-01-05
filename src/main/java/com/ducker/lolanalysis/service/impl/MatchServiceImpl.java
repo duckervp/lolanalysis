@@ -18,6 +18,7 @@ import com.ducker.lolanalysis.repository.MatchLookupRepository;
 import com.ducker.lolanalysis.repository.MatchRepository;
 import com.ducker.lolanalysis.repository.ObjectiveRepository;
 import com.ducker.lolanalysis.repository.ParticipantRepository;
+import com.ducker.lolanalysis.repository.PerkRepository;
 import com.ducker.lolanalysis.repository.PerkStyleSelectionRepository;
 import com.ducker.lolanalysis.repository.SelectionRepository;
 import com.ducker.lolanalysis.repository.TeamRepository;
@@ -62,6 +63,8 @@ public class MatchServiceImpl implements MatchService {
     private final SelectionRepository selectionRepository;
 
     private final PerkStyleSelectionRepository perkStyleSelectionRepository;
+
+    private final PerkRepository perkRepository;
 
     private final RiotMatchService riotMatchService;
 
@@ -173,6 +176,7 @@ public class MatchServiceImpl implements MatchService {
                 selection.getId()));
         List<Participant> participants = new ArrayList<>();
         List<Selection> selectionsToSave = new ArrayList<>();
+        List<Perk> perks = new ArrayList<>();
         List<PerkStyleSelection> perkStyleSelections = new ArrayList<>();
         for (ParticipantDto participantDto : matchInfo.getParticipants()) {
             String participantId = "ppid-".concat(UUID.randomUUID().toString());
@@ -181,9 +185,10 @@ public class MatchServiceImpl implements MatchService {
             participant.setMatchId(match.getMatchId());
             participants.add(participant);
 
-            savePerk(participantDto, participantId, selectionIdMap, selectionsToSave, perkStyleSelections);
+            savePerk(participantDto, participantId, selectionIdMap, perks, selectionsToSave, perkStyleSelections);
         }
         participantRepository.saveAll(participants);
+        perkRepository.saveAll(perks);
         selectionRepository.saveAll(selectionsToSave);
         perkStyleSelectionRepository.saveAll(perkStyleSelections);
 
@@ -307,6 +312,7 @@ public class MatchServiceImpl implements MatchService {
     private void savePerk(ParticipantDto participantDto,
                           String participantId,
                           Map<String, String> selectionIdMap,
+                          List<Perk> perks,
                           List<Selection> selections,
                           List<PerkStyleSelection> perkStyleSelections) {
         PerksDto perksDto = participantDto.getPerks();
@@ -318,6 +324,7 @@ public class MatchServiceImpl implements MatchService {
                 .offense(perksDto.getStatPerks().getOffense())
                 .defense(perksDto.getStatPerks().getDefense())
                 .build();
+        perks.add(perk);
 
         for (PerkStyleDto perkStyleDto : perksDto.getStyles()) {
 
