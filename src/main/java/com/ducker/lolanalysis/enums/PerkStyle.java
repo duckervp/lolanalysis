@@ -9,9 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @RequiredArgsConstructor
 @Slf4j
-public enum PerkType {
-    PRIMARY_TYPE("primaryType"),
-    SUB_TYPE("subType");
+public enum PerkStyle {
+    PRIMARY_TYPE("primaryStyle"),
+    SUB_TYPE("subStyle");
 
     private final String value;
 
@@ -21,8 +21,8 @@ public enum PerkType {
     }
 
     @JsonCreator // convert value to enum on request class
-    public static PerkType fromValue(String value) {
-        for (PerkType name : PerkType.values()) {
+    public static PerkStyle fromValue(String value) {
+        for (PerkStyle name : PerkStyle.values()) {
             if (name.value.equalsIgnoreCase(value)) {
                 return name;
             }

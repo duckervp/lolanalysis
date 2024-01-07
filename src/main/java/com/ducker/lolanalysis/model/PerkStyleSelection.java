@@ -1,6 +1,6 @@
 package com.ducker.lolanalysis.model;
 
-import com.ducker.lolanalysis.enums.PerkType;
+import com.ducker.lolanalysis.enums.PerkStyle;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -28,5 +28,6 @@ public class PerkStyleSelection {
     private String perkId;
     private String selectionId;
     @Enumerated(EnumType.STRING)
-    PerkType perkType;
+    private PerkStyle perkStyle;
+    private Integer seqNo;
 }

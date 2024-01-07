@@ -2,7 +2,7 @@ package com.ducker.lolanalysis.service.impl;
 
 import com.ducker.lolanalysis.dto.*;
 import com.ducker.lolanalysis.enums.ObjectiveType;
-import com.ducker.lolanalysis.enums.PerkType;
+import com.ducker.lolanalysis.enums.PerkStyle;
 import com.ducker.lolanalysis.exception.NotFoundException;
 import com.ducker.lolanalysis.model.Ban;
 import com.ducker.lolanalysis.model.Match;
@@ -35,13 +35,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -275,10 +269,79 @@ public class MatchServiceImpl implements MatchService {
         metadataDto.setParticipants(participants.stream().map(Participant::getPuuid).toList());
         matchDto.setMetadata(metadataDto);
 
-        List<ParticipantDto> participantDtoList = new ArrayList<>();
+        List<String> participantIds = participants.stream().map(Participant::getId).toList();
 
+        List<Perk> perks = perkRepository.findByParticipantIdIn(participantIds);
+
+        List<String> perkIds = perks.stream().map(Perk::getId).toList();
+
+        List<PerkStyleSelection> perkStyleSelections = perkStyleSelectionRepository.findByPerkIdIn(perkIds);
+
+        List<String> selectionIds = perkStyleSelections.stream().map(PerkStyleSelection::getSelectionId).toList();
+
+        List<Selection> selections = selectionRepository.findByIdIn(selectionIds);
+
+
+        List<ParticipantDto> participantDtoList = new ArrayList<>();
         for (Participant participant : participants) {
             ParticipantDto participantDto = objectMapper.convertValue(participant, ParticipantDto.class);
+            Perk perk = perks.stream()
+                    .filter(perk1 -> perk1.getParticipantId().equals(participant.getId()))
+                    .findAny().orElse(null);
+            if (Objects.nonNull(perk)) {
+                PerksDto perksDto = PerksDto.builder()
+                        .statPerks(PerkStatsDto.builder()
+                                .defense(perk.getDefense())
+                                .flex(perk.getFlex())
+                                .offense(perk.getOffense())
+                                .build())
+                        .build();
+
+                Map<String, Integer> selectionIdSeqNoMap = new HashMap<>();
+
+                List<String> primaryStyleSelectionIds = perkStyleSelections.stream()
+                        .filter(perkStyleSelection -> (
+                                perkStyleSelection.getPerkId().equals(perk.getId())
+                                        && perkStyleSelection.getPerkStyle().equals(PerkStyle.PRIMARY_TYPE)))
+                        .peek(perkStyleSelection -> selectionIdSeqNoMap.put(perkStyleSelection.getSelectionId(), perkStyleSelection.getSeqNo()))
+                        .map(PerkStyleSelection::getSelectionId)
+                        .toList();
+
+                List<PerkStyleSelectionDto> primaryStyleSelectionDtoList = selections.stream()
+                        .filter(selection -> primaryStyleSelectionIds.contains(selection.getId()))
+                        .sorted(Comparator.comparing(s -> selectionIdSeqNoMap.get(s.getId())))
+                        .map(selection -> objectMapper.convertValue(selection, PerkStyleSelectionDto.class)).toList();
+
+                PerkStyleDto primaryPerkStyleDto = PerkStyleDto.builder()
+                        .style(perk.getPrimaryStylePerk())
+                        .description(PerkStyle.PRIMARY_TYPE.getValue())
+                        .selections(primaryStyleSelectionDtoList)
+                        .build();
+
+                selectionIdSeqNoMap.clear();
+
+                List<String> subStyleSelectionIds = perkStyleSelections.stream()
+                        .filter(perkStyleSelection -> (
+                                perkStyleSelection.getPerkId().equals(perk.getId())
+                                        && perkStyleSelection.getPerkStyle().equals(PerkStyle.SUB_TYPE)))
+                        .peek(perkStyleSelection -> selectionIdSeqNoMap.put(perkStyleSelection.getSelectionId(), perkStyleSelection.getSeqNo()))
+                        .map(PerkStyleSelection::getSelectionId)
+                        .toList();
+
+                List<PerkStyleSelectionDto> subStyleSelectionDtoList = selections.stream()
+                        .filter(selection -> subStyleSelectionIds.contains(selection.getId()))
+                        .sorted(Comparator.comparing(s -> selectionIdSeqNoMap.get(s.getId())))
+                        .map(selection -> objectMapper.convertValue(selection, PerkStyleSelectionDto.class)).toList();
+
+                PerkStyleDto subPerkStyleDto = PerkStyleDto.builder()
+                        .style(perk.getSubStylePerk())
+                        .description(PerkStyle.SUB_TYPE.getValue())
+                        .selections(subStyleSelectionDtoList)
+                        .build();
+
+                perksDto.setStyles(List.of(primaryPerkStyleDto, subPerkStyleDto));
+                participantDto.setPerks(perksDto);
+            }
             participantDtoList.add(participantDto);
         }
 
@@ -327,23 +390,23 @@ public class MatchServiceImpl implements MatchService {
         perks.add(perk);
 
         for (PerkStyleDto perkStyleDto : perksDto.getStyles()) {
+            PerkStyle currentPerkStyle = PerkStyle.fromValue(perkStyleDto.getDescription());
 
-            if (perkStyleDto.getDescription().equals(PerkType.PRIMARY_TYPE.getValue())) {
+            if (PerkStyle.PRIMARY_TYPE.equals(currentPerkStyle)) {
                 perk.setPrimaryStylePerk(perkStyleDto.getStyle());
             } else {
                 perk.setSubStylePerk(perkStyleDto.getStyle());
             }
 
+            int seqNo = 0;
             for (PerkStyleSelectionDto perkStyleSelectionDto : perkStyleDto.getSelections()) {
                 String key = genKey(List.of(
                         perkStyleSelectionDto.getPerk(),
                         perkStyleSelectionDto.getVar1(),
                         perkStyleSelectionDto.getVar2(),
                         perkStyleSelectionDto.getVar3()));
-                PerkStyleSelection perkStyleSelection = new PerkStyleSelection();
 
                 String selectionId = selectionIdMap.get(key);
-
                 if (Objects.isNull(selectionId)) {
                     selectionId = "sid-".concat(UUID.randomUUID().toString());
                     Selection selection = Selection.builder()
@@ -356,9 +419,12 @@ public class MatchServiceImpl implements MatchService {
                     selections.add(selection);
                 }
 
-                perkStyleSelection.setPerkId(perk.getId());
-                perkStyleSelection.setSelectionId(selectionId);
-                perkStyleSelections.add(perkStyleSelection);
+                perkStyleSelections.add(PerkStyleSelection.builder()
+                                .perkId(perk.getId())
+                                .selectionId(selectionId)
+                                .perkStyle(currentPerkStyle)
+                                .seqNo(seqNo++)
+                        .build());
             }
         }
     }
