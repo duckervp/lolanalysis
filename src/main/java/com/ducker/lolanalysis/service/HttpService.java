@@ -1,5 +1,7 @@
 package com.ducker.lolanalysis.service;
 
+import com.ducker.lolanalysis.enums.RiotPlatformRouting;
+import com.ducker.lolanalysis.enums.RiotRegionalRouting;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -13,22 +15,29 @@ public class HttpService {
     @Value("${riotGames.apiKey}")
     private String riotGamesApiKey;
 
-    public String prepareUrl(String apiPath) {
-        log.info("Prepare Url for {}", apiPath);
+    public String prepareUrl(String routingHost, String apiPath) {
         String slash = "/";
         if (!apiPath.startsWith(slash)) {
             apiPath = slash + apiPath;
         }
-        return "https://sea.api.riotgames.com" + apiPath;
+
+        String url = "https://" + routingHost + apiPath;
+
+        log.info("Prepare Url: {}", url);
+
+        return url;
+    }
+
+    public String prepareMatchUrl(String apiPath) {
+        return prepareUrl(RiotRegionalRouting.SEA.getHost(), apiPath);
     }
 
     public String prepareAccountUrl(String apiPath) {
-        log.info("Prepare Url for {}", apiPath);
-        String slash = "/";
-        if (!apiPath.startsWith(slash)) {
-            apiPath = slash + apiPath;
-        }
-        return "https://asia.api.riotgames.com" + apiPath;
+        return prepareUrl(RiotRegionalRouting.ASIA.getHost(), apiPath);
+    }
+
+    public String prepareSummonerUrl(String apiPath) {
+        return prepareUrl(RiotPlatformRouting.VN2.getHost(), apiPath);
     }
 
     public HttpHeaders prepareHeaders(Map<String, String> headerMap) {

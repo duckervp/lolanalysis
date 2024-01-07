@@ -1,11 +1,14 @@
 package com.ducker.lolanalysis.rest;
 
+import com.ducker.lolanalysis.dto.MasteryDto;
 import com.ducker.lolanalysis.dto.MatchDto;
+import com.ducker.lolanalysis.dto.SummonerDto;
 import com.ducker.lolanalysis.dto.request.MatchRequestParam;
 import com.ducker.lolanalysis.dto.response.Response;
 import com.ducker.lolanalysis.model.Account;
 import com.ducker.lolanalysis.service.RiotAccountService;
 import com.ducker.lolanalysis.service.RiotMatchService;
+import com.ducker.lolanalysis.service.RiotSummonerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +28,8 @@ public class RiotGamesController {
 
     private final RiotMatchService riotMatchService;
 
+    private final RiotSummonerService riotSummonerService;
+
     @GetMapping("/accounts")
     public ResponseEntity<Response<Account>> findAccount(@RequestParam String gameName, @RequestParam String tagLine) {
         Response<Account> response = Response.with(
@@ -40,6 +45,24 @@ public class RiotGamesController {
                 HttpStatus.OK.value(),
                 "Found Riot Account Successfully",
                 riotAccountService.findAccount(puuid));
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/lol/summoners/{puuid}")
+    public ResponseEntity<Response<SummonerDto>> findSummoner(@PathVariable String puuid) {
+        Response<SummonerDto> response = Response.with(
+                HttpStatus.OK.value(),
+                "Found LOL summoner Successfully",
+                riotSummonerService.findSummoner(puuid));
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/lol/champion-mastery/{puuid}")
+    public ResponseEntity<Response<List<MasteryDto>>> findSummonerChampionMastery(@PathVariable String puuid) {
+        Response<List<MasteryDto>> response = Response.with(
+                HttpStatus.OK.value(),
+                "Found LOL summoner Successfully",
+                riotSummonerService.findChampionMastery(puuid));
         return ResponseEntity.ok(response);
     }
 

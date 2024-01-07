@@ -3,14 +3,12 @@ package com.ducker.lolanalysis.service.impl;
 import com.ducker.lolanalysis.dto.MatchDto;
 import com.ducker.lolanalysis.dto.request.MatchRequestParam;
 import com.ducker.lolanalysis.service.HttpService;
-import com.ducker.lolanalysis.service.MatchService;
 import com.ducker.lolanalysis.service.RiotMatchService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -43,17 +41,16 @@ public class RiotMatchServiceImpl implements RiotMatchService {
         HttpHeaders httpHeaders = httpService.prepareHeaders(new HashMap<>());
         String queryString = httpService.buildQueryString(paramMap);
         HttpEntity<Object> request = new HttpEntity<>(httpHeaders);
-        String url = httpService.prepareUrl("/lol/match/v5/matches/by-puuid/"+ requestParam.getPuuid() +"/ids" + queryString);
-        TypeReference<List<String>> listString = new TypeReference<>() {};
-        ResponseEntity<String> matchIdsResponse = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
-        return objectMapper.readValue(matchIdsResponse.getBody(), listString);
+        String url = httpService.prepareMatchUrl("/lol/match/v5/matches/by-puuid/"+ requestParam.getPuuid() +"/ids" + queryString);
+        ResponseEntity<String[]> matchIdsResponse = restTemplate.exchange(url, HttpMethod.GET, request, String[].class);
+        return List.of(Objects.requireNonNull(matchIdsResponse.getBody()));
     }
 
     @Override
     @Cacheable(cacheNames = "match", key = "#matchId")
     public MatchDto crawlMatchById(String matchId) {
         HttpEntity<Object> request = new HttpEntity<>(httpService.prepareHeaders(new HashMap<>()));
-        String url = httpService.prepareUrl("/lol/match/v5/matches/" + matchId);
+        String url = httpService.prepareMatchUrl("/lol/match/v5/matches/" + matchId);
         ResponseEntity<MatchDto> matchDtoResponseEntity = restTemplate.exchange(url, HttpMethod.GET, request, MatchDto.class);
         return matchDtoResponseEntity.getBody();
     }

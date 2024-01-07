@@ -1,5 +1,6 @@
 package com.ducker.lolanalysis.service.impl;
 
+import com.ducker.lolanalysis.dto.SummonerDto;
 import com.ducker.lolanalysis.model.Account;
 import com.ducker.lolanalysis.service.HttpService;
 import com.ducker.lolanalysis.service.RiotAccountService;
