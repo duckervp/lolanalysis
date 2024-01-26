@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8888
 
 riotGames:
   apiKey: ${RIOT_API_KEY}
