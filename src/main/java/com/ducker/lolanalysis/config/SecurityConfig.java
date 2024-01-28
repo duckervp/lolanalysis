@@ -29,7 +29,8 @@ public class SecurityConfig {
 
     private static final String[] PERMIT_ALL_URLS = new String[]{
             "/riot/**",
-            "/matches/**"
+            "/matches/**",
+            "/statistics/**"
     };
 
     @Bean
