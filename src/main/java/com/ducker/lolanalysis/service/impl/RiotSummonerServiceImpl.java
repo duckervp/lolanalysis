@@ -4,9 +4,7 @@ import com.ducker.lolanalysis.dto.MasteryDto;
 import com.ducker.lolanalysis.dto.SummonerDto;
 import com.ducker.lolanalysis.service.HttpService;
 import com.ducker.lolanalysis.service.RiotSummonerService;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -14,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -37,11 +35,20 @@ public class RiotSummonerServiceImpl implements RiotSummonerService {
     }
 
     @Override
-    public List<MasteryDto> findChampionMastery(String puuid) {
+    public List<MasteryDto> findChampionMastery(String puuid, Boolean orderByLevel, Integer count) {
         HttpHeaders httpHeaders = httpService.prepareHeaders(new HashMap<>());
         HttpEntity<Object> httpEntity = new HttpEntity<>(httpHeaders);
         String url = httpService.prepareSummonerUrl("/lol/champion-mastery/v4/champion-masteries/by-puuid/" + puuid);
         ResponseEntity<MasteryDto[]> responseEntity = restTemplate.exchange(url, HttpMethod.GET, httpEntity, MasteryDto[].class);
-        return List.of(Objects.requireNonNull(responseEntity.getBody()));
+        List<MasteryDto> masteryDtoList = List.of(Objects.requireNonNull(responseEntity.getBody()));
+        if (Boolean.TRUE.equals(orderByLevel)) {
+            masteryDtoList = masteryDtoList.stream().sorted(
+                    Comparator.comparing(MasteryDto::getChampionLevel, Comparator.reverseOrder())
+                            .thenComparing(MasteryDto::getChampionPoints, Comparator.reverseOrder())).toList();
+        }
+        if (Objects.nonNull(count) && count > 0 && count < masteryDtoList.size()) {
+            return masteryDtoList.subList(0, count);
+        }
+        return masteryDtoList;
     }
 }

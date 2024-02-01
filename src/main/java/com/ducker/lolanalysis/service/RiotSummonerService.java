@@ -8,5 +8,5 @@ import java.util.List;
 public interface RiotSummonerService {
     SummonerDto findSummoner(String puuid);
 
-    List<MasteryDto> findChampionMastery(String puuid);
+    List<MasteryDto> findChampionMastery(String puuid, Boolean orderByLevel, Integer count);
 }

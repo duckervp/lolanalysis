@@ -58,11 +58,14 @@ public class RiotGamesController {
     }
 
     @GetMapping("/lol/champion-mastery/{puuid}")
-    public ResponseEntity<Response<List<MasteryDto>>> findSummonerChampionMastery(@PathVariable String puuid) {
+    public ResponseEntity<Response<List<MasteryDto>>> findSummonerChampionMastery(
+            @PathVariable String puuid,
+            @RequestParam(required = false, defaultValue = "false") Boolean orderByLevel,
+            @RequestParam(required = false) Integer count) {
         Response<List<MasteryDto>> response = Response.with(
                 HttpStatus.OK.value(),
                 "Found LOL summoner Successfully",
-                riotSummonerService.findChampionMastery(puuid));
+                riotSummonerService.findChampionMastery(puuid, orderByLevel, count));
         return ResponseEntity.ok(response);
     }
 
